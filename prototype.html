@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>供销存管理系统 - 高保真原型</title>
+        <!-- Tailwind CSS -->
+        <script src="https://cdn.tailwindcss.com"></script>
+        <!-- FontAwesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            sans: ["Inter", "sans-serif"],
+                        },
+                        colors: {
+                            primary: {
+                                50: "#eff6ff",
+                                100: "#dbeafe",
+                                200: "#bfdbfe",
+                                300: "#93c5fd",
+                                400: "#60a5fa",
+                                500: "#3b82f6",
+                                600: "#2563eb", // 主色调
+                                700: "#1d4ed8",
+                                800: "#1e40af",
+                                900: "#1e3a8a",
+                                950: "#172554",
+                            },
+                            dark: {
+                                800: "#1f2937",
+                                900: "#0f172a", // 深蓝背景
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+        <style>
+            body {
+                font-family: "Inter", sans-serif;
+            }
+            /* 简单的淡入动画 */
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            /* 自定义滚动条 */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 3px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 text-gray-800 antialiased h-screen flex overflow-hidden">
+        <!-- 左侧菜单栏 -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col shadow-2xl z-20 transition-all duration-300" id="sidebar">
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-slate-950">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
+                        <i class="fa-solid fa-boxes-stacked text-white text-sm"></i>
+                    </div>
+                    <span class="text-lg font-bold tracking-wide">PSI System</span>
+                </div>
+            </div>
+
+            <!-- 菜单列表 -->
+            <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-1" id="menu-container">
+                <!-- 菜单项将通过 JS 渲染 -->
+            </nav>
+
+            <!-- 底部用户信息 -->
+            <div class="p-4 border-t border-slate-800 bg-slate-950">
+                <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-800 transition cursor-pointer">
+                    <img
+                        src="https://ui-avatars.com/api/?name=Admin+User&background=3b82f6&color=fff"
+                        alt="User"
+                        class="w-10 h-10 rounded-full border-2 border-slate-700"
+                    />
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold text-white">管理员</span>
+                        <span class="text-xs text-slate-400">admin@psi.com</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right ml-auto text-xs text-slate-500"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧主要内容区 -->
+        <main class="flex-1 flex flex-col min-w-0 bg-gray-50">
+            <!-- 顶部导航栏 -->
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm z-10">
+                <div class="flex items-center gap-4">
+                    <button id="sidebar-toggle" class="p-2 rounded-md hover:bg-gray-100 text-gray-500 lg:hidden">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h2 class="text-xl font-semibold text-gray-800" id="page-title">商品管理</h2>
+                    <!-- 面包屑 -->
+                    <div class="hidden md:flex items-center text-sm text-gray-500 pl-4 border-l border-gray-200 ml-4">
+                        <span>首页</span>
+                        <i class="fa-solid fa-chevron-right text-xs mx-2"></i>
+                        <span class="text-blue-600 font-medium" id="breadcrumb-current">商品管理</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="relative hidden sm:block">
+                        <i
+                            class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"
+                        ></i>
+                        <input
+                            type="text"
+                            placeholder="全局搜索..."
+                            class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-gray-50 focus:bg-white transition"
+                        />
+                    </div>
+                    <button
+                        class="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center relative text-gray-500"
+                    >
+                        <i class="fa-regular fa-bell"></i>
+                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 内容滚动区 -->
+            <div class="flex-1 overflow-auto p-6 relative" id="content-area">
+                <!-- 动态内容将渲染在这里 -->
+            </div>
+        </main>
+
+        <!-- 模态框 (Modal) -->
+        <div id="modal" class="fixed inset-0 z-50 hidden">
+            <div
+                class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity opacity-0 modal-backdrop"
+                onclick="closeModal()"
+            ></div>
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div
+                    class="bg-white rounded-xl shadow-2xl w-full max-w-lg transform transition-all scale-95 opacity-0 modal-content overflow-hidden"
+                >
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                        <h3 class="text-lg font-semibold text-gray-800" id="modal-title">新增条目</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 transition">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4" id="modal-form-container">
+                        <!-- 表单内容动态生成 -->
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                        <button
+                            onclick="closeModal()"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200 transition"
+                        >
+                            取消
+                        </button>
+                        <button
+                            onclick="saveData()"
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-200 transition"
+                        >
+                            保存
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- JavaScript 逻辑 -->
+        <script>
+            // --- 数据定义 ---
+            const menuItems = [
+                { id: "dashboard", label: "仪表盘", icon: "fa-chart-line" },
+                { id: "products", label: "商品管理", icon: "fa-cube" },
+                { id: "purchase", label: "采购管理", icon: "fa-cart-shopping" },
+                { id: "sales", label: "销售管理", icon: "fa-cash-register" },
+                { id: "inventory", label: "库存管理", icon: "fa-warehouse" },
+                { id: "suppliers", label: "供应商", icon: "fa-truck-field" },
+                { id: "settings", label: "系统设置", icon: "fa-gear" },
+            ];
+
+            // 模拟各模块数据
+            const mockData = {
+                products: {
+                    headers: ["ID", "商品名称", "分类", "单价", "库存", "状态"],
+                    rows: [
+                        {
+                            id: "1001",
+                            name: "高级人体工学椅",
+                            category: "办公家具",
+                            price: "¥899.00",
+                            stock: 45,
+                            status: "sales",
+                        },
+                        { id: "1002", name: "机械键盘 K8", category: "电子配件", price: "¥399.00", stock: 120, status: "sales" },
+                        { id: "1003", name: "4K 显示器 27寸", category: "电子设备", price: "¥1899.00", stock: 12, status: "low" },
+                        { id: "1004", name: "无线鼠标 M3", category: "电子配件", price: "¥89.00", stock: 300, status: "sales" },
+                        { id: "1005", name: "升降办公桌", category: "办公家具", price: "¥1299.00", stock: 0, status: "out" },
+                    ],
+                    fields: [
+                        { label: "商品名称", type: "text", placeholder: "输入商品名称" },
+                        { label: "分类", type: "select", options: ["办公家具", "电子配件", "电子设备"] },
+                        { label: "单价", type: "number", placeholder: "0.00" },
+                        { label: "库存", type: "number", placeholder: "0" },
+                    ],
+                },
+                purchase: {
+                    headers: ["单号", "供应商", "采购日期", "总金额", "状态"],
+                    rows: [
+                        { id: "PO-20231001", supplier: "联想科技", date: "2023-10-01", total: "¥56,000.00", status: "completed" },
+                        { id: "PO-20231005", supplier: "得力办公", date: "2023-10-05", total: "¥12,400.00", status: "pending" },
+                    ],
+                    fields: [
+                        { label: "供应商", type: "text" },
+                        { label: "采购日期", type: "date" },
+                        { label: "总金额", type: "number" },
+                    ],
+                },
+                sales: {
+                    headers: ["单号", "客户", "销售日期", "总金额", "状态"],
+                    rows: [
+                        { id: "SO-20231002", client: "字节跳动", date: "2023-10-02", total: "¥120,000.00", status: "completed" },
+                        { id: "SO-20231008", client: "腾讯科技", date: "2023-10-08", total: "¥89,000.00", status: "shipped" },
+                    ],
+                    fields: [
+                        { label: "客户名称", type: "text" },
+                        { label: "销售日期", type: "date" },
+                        { label: "总金额", type: "number" },
+                    ],
+                },
+            };
+
+            // 当前状态
+            let activeModule = "products";
+            let currentRows = [...mockData.products.rows];
+
+            // --- 初始化 ---
+            document.addEventListener("DOMContentLoaded", () => {
+                renderMenu();
+                loadModule(activeModule);
+                setupEventListeners();
+            });
+
+            // --- 渲染逻辑 ---
+
+            function renderMenu() {
+                const container = document.getElementById("menu-container");
+                container.innerHTML = menuItems
+                    .map(
+                        (item) => `
+                <a href="#" onclick="loadModule('${item.id}'); return false;" 
+                   class="group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors duration-200 mb-1
+                   ${
+                       item.id === activeModule
+                           ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
+                           : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                   }">
+                    <i class="fa-solid ${item.icon} w-6 text-center text-base mr-3 ${
+                            item.id === activeModule ? "text-white" : "text-slate-400 group-hover:text-white"
+                        }"></i>
+                    ${item.label}
+                </a>
+            `
+                    )
+                    .join("");
+            }
+
+            function loadModule(moduleId) {
+                activeModule = moduleId;
+                renderMenu(); // 更新菜单高亮
+
+                // 更新标题
+                const item = menuItems.find((i) => i.id === moduleId);
+                document.getElementById("page-title").textContent = item.label;
+                document.getElementById("breadcrumb-current").textContent = item.label;
+
+                const contentArea = document.getElementById("content-area");
+
+                // 简单处理仪表盘和其他页面
+                if (moduleId === "dashboard") {
+                    contentArea.innerHTML = renderDashboard();
+                } else if (mockData[moduleId]) {
+                    // 如果是数据模块，重新加载数据源（模拟重置）
+                    currentRows = [...mockData[moduleId].rows];
+                    contentArea.innerHTML = renderTableLayout(moduleId);
+                } else {
+                    contentArea.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <i class="fa-solid fa-person-digging text-4xl mb-4"></i>
+                    <p>该模块正在开发中...</p>
+                </div>`;
+                }
+
+                // 添加淡入动画
+                contentArea.firstChild.classList.add("fade-in");
+            }
+
+            function renderDashboard() {
+                return `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    ${[
+                        { title: "总销售额", value: "¥1,234,567", change: "+12.5%", icon: "fa-coins", color: "blue" },
+                        { title: "本月订单", value: "456", change: "+8.2%", icon: "fa-cart-shopping", color: "purple" },
+                        { title: "新增客户", value: "89", change: "-2.4%", icon: "fa-users", color: "indigo" },
+                        { title: "库存预警", value: "12", change: "需要关注", icon: "fa-triangle-exclamation", color: "red" },
+                    ]
+                        .map(
+                            (stat) => `
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex items-start justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">${stat.title}</p>
+                                <h4 class="mt-2 text-2xl font-bold text-gray-800">${stat.value}</h4>
+                                <span class="text-xs ${
+                                    stat.change.includes("+") ? "text-green-600" : "text-red-500"
+                                } font-medium mt-1 block">
+                                    ${stat.change} <span class="text-gray-400 font-normal">较上月</span>
+                                </span>
+                            </div>
+                            <div class="p-3 bg-${stat.color}-50 rounded-lg text-${stat.color}-600">
+                                <i class="fa-solid ${stat.icon} text-lg"></i>
+                            </div>
+                        </div>
+                    `
+                        )
+                        .join("")}
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-96 flex items-center justify-center text-gray-400">
+                    <p>图表区域 (Chart.js / ECharts 占位)</p>
+                </div>
+            `;
+            }
+
+            function renderTableLayout(moduleId) {
+                const data = mockData[moduleId];
+                if (!data) return "";
+
+                return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full">
+                    <!-- 工具栏 -->
+                    <div class="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                <input type="text" placeholder="搜索..." oninput="filterTable(this.value)"
+                                    class="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-64">
+                            </div>
+                            <button class="px-3 py-2 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
+                                <i class="fa-solid fa-filter mr-1"></i> 筛选
+                            </button>
+                        </div>
+                        <button onclick="openModal()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md shadow-blue-200 text-sm font-medium">
+                            <i class="fa-solid fa-plus"></i> 新增${menuItems
+                                .find((i) => i.id === moduleId)
+                                .label.replace("管理", "")}
+                        </button>
+                    </div>
+
+                    <!-- 表格 -->
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+                                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    </th>
+                                    ${data.headers
+                                        .map(
+                                            (h) => `
+                                        <th class="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200">${h}</th>
+                                    `
+                                        )
+                                        .join("")}
+                                    <th class="py-3 px-6 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-200 text-right">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-gray-100">
+                                ${renderTableRows(data.rows, data.headers)}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50 rounded-b-xl">
+                        <span class="text-sm text-gray-500">共 ${data.rows.length} 条数据</span>
+                        <div class="flex items-center gap-2">
+                            <button class="w-8 h-8 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100 disabled:opacity-50" disabled>
+                                <i class="fa-solid fa-chevron-left text-xs"></i>
+                            </button>
+                            <button class="w-8 h-8 flex items-center justify-center rounded bg-blue-600 text-white text-sm font-medium">1</button>
+                            <button class="w-8 h-8 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100">2</button>
+                            <button class="w-8 h-8 flex items-center justify-center rounded border border-gray-200 bg-white text-gray-500 hover:bg-gray-100">
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }
+
+            function renderTableRows(rows, headers) {
+                if (rows.length === 0) {
+                    return `<tr><td colspan="${headers.length + 2}" class="py-12 text-center text-gray-400">暂无数据</td></tr>`;
+                }
+                return rows
+                    .map(
+                        (row, index) => `
+                <tr class="hover:bg-blue-50/50 transition-colors group">
+                    <td class="py-3 px-6 border-b border-gray-100">
+                        <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    </td>
+                    ${Object.keys(row)
+                        .map((key) => {
+                            let content = row[key];
+                            // 简单的状态样式处理
+                            if (key === "status") {
+                                const statusStyles = {
+                                    sales: "bg-green-100 text-green-700",
+                                    low: "bg-yellow-100 text-yellow-700",
+                                    out: "bg-red-100 text-red-700",
+                                    completed: "bg-green-100 text-green-700",
+                                    pending: "bg-orange-100 text-orange-700",
+                                };
+                                const statusText = {
+                                    sales: "在售",
+                                    low: "库存紧张",
+                                    out: "缺货",
+                                    completed: "已完成",
+                                    pending: "待处理",
+                                    shipped: "已发货",
+                                };
+                                content = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    statusStyles[content] || "bg-gray-100 text-gray-800"
+                                }">
+                                ${statusText[content] || content}
+                            </span>`;
+                            }
+                            return `<td class="py-3 px-6 text-sm text-gray-700 border-b border-gray-100 whitespace-nowrap">${content}</td>`;
+                        })
+                        .join("")}
+                    <td class="py-3 px-6 border-b border-gray-100 text-right">
+                        <div class="invisible group-hover:visible flex justify-end gap-2">
+                            <button onclick="openModal(${index})" class="p-1.5 rounded text-blue-600 hover:bg-blue-100 transition" title="编辑">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteRow(${index})" class="p-1.5 rounded text-red-500 hover:bg-red-100 transition" title="删除">
+                                <i class="fa-regular fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `
+                    )
+                    .join("");
+            }
+
+            // --- 交互逻辑 ---
+
+            // 搜索过滤（前端模拟）
+            function filterTable(query) {
+                if (!query) {
+                    document.getElementById("table-body").innerHTML = renderTableRows(
+                        currentRows,
+                        mockData[activeModule].headers
+                    );
+                    return;
+                }
+                const filtered = currentRows.filter((row) =>
+                    Object.values(row).some((val) => String(val).toLowerCase().includes(query.toLowerCase()))
+                );
+                document.getElementById("table-body").innerHTML = renderTableRows(filtered, mockData[activeModule].headers);
+            }
+
+            // 模态框控制
+            let editingIndex = -1;
+
+            function openModal(index = -1) {
+                editingIndex = index;
+                const modal = document.getElementById("modal");
+                const backdrop = modal.querySelector(".modal-backdrop");
+                const content = modal.querySelector(".modal-content");
+                const title = document.getElementById("modal-title");
+                const formContainer = document.getElementById("modal-form-container");
+                const dataConfig = mockData[activeModule];
+
+                if (!dataConfig) return;
+
+                // 设置标题
+                title.textContent = index >= 0 ? "编辑信息" : "新增信息";
+
+                // 生成表单
+                const rowData = index >= 0 ? currentRows[index] : {};
+                formContainer.innerHTML = dataConfig.fields
+                    .map(
+                        (field, i) => `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">${field.label}</label>
+                    ${
+                        field.type === "select"
+                            ? `<select id="field-${i}" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            ${field.options
+                                .map(
+                                    (opt) =>
+                                        `<option ${
+                                            rowData[Object.keys(rowData)[i + 1]] === opt ? "selected" : ""
+                                        }>${opt}</option>`
+                                )
+                                .join("")}
+                           </select>`
+                            : `<input type="${field.type}" id="field-${i}" value="${
+                                  Object.values(rowData)[i + 1] || ""
+                              }" placeholder="${field.placeholder || ""}" 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">`
+                    }
+                </div>
+            `
+                    )
+                    .join("");
+
+                // 显示动画
+                modal.classList.remove("hidden");
+                // 强制重绘
+                void modal.offsetWidth;
+                backdrop.classList.remove("opacity-0");
+                content.classList.remove("opacity-0", "scale-95");
+            }
+
+            function closeModal() {
+                const modal = document.getElementById("modal");
+                const backdrop = modal.querySelector(".modal-backdrop");
+                const content = modal.querySelector(".modal-content");
+
+                backdrop.classList.add("opacity-0");
+                content.classList.add("opacity-0", "scale-95");
+
+                setTimeout(() => {
+                    modal.classList.add("hidden");
+                }, 300);
+            }
+
+            // 保存数据（模拟）
+            function saveData() {
+                // 这里的逻辑主要为了演示 UI 反馈
+                const btn = document.querySelector("#modal button.bg-blue-600");
+                const originalText = btn.textContent;
+                btn.textContent = "保存中...";
+                btn.disabled = true;
+
+                setTimeout(() => {
+                    // 模拟数据更新
+                    // 实际项目中这里会收集表单数据并更新 currentRows
+
+                    closeModal();
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+
+                    // 刷新表格
+                    document.getElementById("table-body").innerHTML = renderTableRows(
+                        currentRows,
+                        mockData[activeModule].headers
+                    );
+
+                    // 简单提示
+                    alert("数据保存成功 (模拟)");
+                }, 800);
+            }
+
+            // 删除数据（模拟）
+            function deleteRow(index) {
+                if (confirm("确定要删除这条记录吗？")) {
+                    currentRows.splice(index, 1);
+                    document.getElementById("table-body").innerHTML = renderTableRows(
+                        currentRows,
+                        mockData[activeModule].headers
+                    );
+                }
+            }
+
+            function setupEventListeners() {
+                document.getElementById("sidebar-toggle").addEventListener("click", () => {
+                    const sidebar = document.getElementById("sidebar");
+                    // 移动端简单的 sidebar toggle 逻辑
+                    sidebar.classList.toggle("-translate-x-full");
+                    sidebar.classList.toggle("absolute");
+                    sidebar.classList.toggle("h-full");
+                });
+            }
+        </script>
+    </body>
+</html>
